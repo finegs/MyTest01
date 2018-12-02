@@ -1,20 +1,20 @@
+#include <cstdlib>
 #include <iostream>
-#include <WorkerThread.h>
-#include <ThreadMsg.h>
+//s#include <ThreadMsg.h>
 #include <AsyncLogger.h>
+#include <WorkerThread.h>
 
 using namespace std;
 
-std::atomic<int> Loggers::g_loggerId = 0;
+std::atomic<int> WorkerThreadMsg::g_seq = 0;
 
-
-WorkerThread workerThread1("WT1");
-WorkerThread workerThread2("WT2");
-
-int ThreadMsg::g_seq = 0;
-
-int main(void)
+int main(int argc, char* argv[])
 {
+    AsyncLoggers::getInstance();
+
+    WorkerThread workerThread1("WT1");
+    WorkerThread workerThread2("WT2");
+
 	// Create worker threads
 	workerThread1.createThread();
 	workerThread2.createThread();
@@ -41,5 +41,5 @@ int main(void)
 	workerThread1.exitThread();
 	workerThread2.exitThread();
 
-	return 0;
+	return EXIT_SUCCESS;
 }

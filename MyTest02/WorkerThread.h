@@ -6,8 +6,9 @@
 #include <thread>
 #include <atomic>
 
-#include <UserData.h>
+#include <LogDetailMsg.h>
 #include <ThreadMsg.h>
+#include <UserData.h>
 
 class WorkerThread
 {
@@ -35,10 +36,10 @@ private:
 	void timerThread();
 
 	std::thread* m_thread;
-	std::queue<ThreadMsg*> m_queue;
+	std::queue<WorkerThreadMsg*> m_queue;
 	std::mutex m_mutex;
 	std::condition_variable m_cv;
 	std::atomic<bool>	m_timerExit;
 	std::atomic<bool>   m_run;
-	const char* THREAD_NAME;
+	const char* threadName;
 };

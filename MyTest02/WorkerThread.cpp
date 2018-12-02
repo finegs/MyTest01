@@ -4,13 +4,16 @@
 #include <mutex>
 #include <queue>
 #include <assert.h>
+#include <sstream>
+#include <AsyncLogger.h>
 
 using namespace std;
 
-WorkerThread::WorkerThread(const char* name) : THREAD_NAME(name) 
+WorkerThread::WorkerThread(const char* name) : threadName(name) 
 {
 }
-WorkerThread::~WorkerThread() {
+WorkerThread::~WorkerThread() 
+{
 	//delete THREAD_NAME;
 	//THREAD_NAME = nullptr;
 }
@@ -38,8 +41,9 @@ void WorkerThread::process()
 	m_run = true;
 	thread timerThread(&WorkerThread::timerThread, this);
 
+    stringstream ss;
 	while (m_run) {
-		ThreadMsg* msg = nullptr;
+		WorkerThreadMsg* msg = nullptr;
 		{
 			std::unique_lock<std::mutex> lk(m_mutex);
 			while (m_queue.empty())
@@ -50,18 +54,22 @@ void WorkerThread::process()
 			msg = m_queue.front();
 			m_queue.pop();
 		}
+
+        ss.clear();
 		
 		if (!msg) continue;
 
-		switch (msg->id) {
+		switch (msg->getMsgType()) {
 		case MSG_POST_USER_DATA:
 		{
-			assert(msg->msg != NULL);
+			assert(msg->getMsgDetail() != NULL);
 
-			const UserData* userData = static_cast<const UserData*>(msg->msg);
-                       
+			const UserData* userData = static_cast<const UserData*>(msg->getMsgDetail());
+            
+            ss << "[" << msg->getMsgSeq() << "] "<< userData->msg.c_str() << " on " << userData->year << " by " << threadName << endl;
 
-			cout << "[" << msg->seq << "] "<< userData->msg.c_str() << " on " << userData->year << " by " << THREAD_NAME << endl;
+            AsyncLoggers::log(ss.str());
+
 			delete userData;
 			delete msg;
 			break;
@@ -69,8 +77,10 @@ void WorkerThread::process()
 
 		case MSG_TIMER:
 		{
+            ss << "[" << msg->getMsgSeq() << "] Timer expired on " << threadName << endl;
 
-			cout << "[" << msg->seq << "] Timer expired on " << THREAD_NAME << endl;
+            AsyncLoggers::log(ss.str());
+
 			delete msg;
 			msg = nullptr;
 			break;
@@ -84,13 +94,27 @@ void WorkerThread::process()
 			delete msg;
 
 			unique_lock<mutex> lk(m_mutex);
+
 			while (!m_queue.empty()) {
 				msg = m_queue.front();
+
+                ss.clear();
+
+                const UserData* ud = static_cast<const UserData*>(msg->getMsgDetail());
+
+                ss << "[" << msg->getMsgSeq() << "] [" << ((ud) ? ud->msg.c_str() : "" ) << "] on " << ( ud  ? ud->year : 0) << " by " << threadName << endl;
+
+                AsyncLoggers::log(ss.str());
+
 				m_queue.pop();
 				delete msg;
 			}
 
-			cout << "Exit thread on " << THREAD_NAME << endl;
+            ss.clear();
+
+			ss << "Exit thread on " << threadName << endl;
+
+            AsyncLoggers::log(ss.str());
 
 			m_run = false;
 
@@ -107,7 +131,7 @@ void WorkerThread::postMsg(const UserData* data)
 {
 	assert(m_thread);
 
-	ThreadMsg* threadMsg = new ThreadMsg(MSG_POST_USER_DATA, data);
+	WorkerThreadMsg* threadMsg = new WorkerThreadMsg(MSG_POST_USER_DATA, data);
 
 	unique_lock<mutex> lk(m_mutex);
 	m_queue.push(threadMsg);
@@ -115,10 +139,9 @@ void WorkerThread::postMsg(const UserData* data)
 }
 
 void WorkerThread::exitThread() {
-	if (!m_thread)
-		return;
+	if (!m_thread) return;
 
-	ThreadMsg* threadMsg = new ThreadMsg(MSG_EXIT_THREAD, 0);
+	WorkerThreadMsg* threadMsg = new WorkerThreadMsg(MSG_EXIT_THREAD, 0);
 	{
 		lock_guard<mutex> lk(m_mutex);
 		m_queue.push(threadMsg);
@@ -136,7 +159,7 @@ void WorkerThread::timerThread() {
 	{
 		this_thread::sleep_for(250ms);
 
-		ThreadMsg* threadMsg = new ThreadMsg(MSG_TIMER, 0);
+		WorkerThreadMsg* threadMsg = new WorkerThreadMsg(MSG_TIMER, 0);
 
 		unique_lock<mutex> lk(m_mutex);
 		m_queue.push(threadMsg);
@@ -144,8 +167,7 @@ void WorkerThread::timerThread() {
 	}
 }
 
-
-//WorkerThread& WorkerThread::operator=(const WorkerThread& workerThread) {
-//	WorkerThread wt(workerThread);
-//	return wt;
-//}
+WorkerThread& WorkerThread::operator=(const WorkerThread& workerThread) {
+    exitThread();
+	return *this;
+}

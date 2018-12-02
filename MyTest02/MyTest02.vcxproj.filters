@@ -27,6 +27,12 @@
     <ClInclude Include="AsyncLogger.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="LogDetailMsg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LogRecord.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WorkerThread.cpp">
