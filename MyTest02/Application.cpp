@@ -5,12 +5,13 @@
 
 using namespace std;
 
+std::atomic<int> Loggers::g_loggerId = 0;
+
+
 WorkerThread workerThread1("WT1");
 WorkerThread workerThread2("WT2");
-AsyncLogger logger("Logger");
 
 int ThreadMsg::g_seq = 0;
-int AsyncLogger::g_seq = 0;
 
 int main(void)
 {

@@ -9,7 +9,6 @@ using namespace std;
 
 WorkerThread::WorkerThread(const char* name) : THREAD_NAME(name) 
 {
-
 }
 WorkerThread::~WorkerThread() {
 	//delete THREAD_NAME;
@@ -60,8 +59,7 @@ void WorkerThread::process()
 			assert(msg->msg != NULL);
 
 			const UserData* userData = static_cast<const UserData*>(msg->msg);
-
-            
+                       
 
 			cout << "[" << msg->seq << "] "<< userData->msg.c_str() << " on " << userData->year << " by " << THREAD_NAME << endl;
 			delete userData;

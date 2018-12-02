@@ -3,7 +3,9 @@
 
 using namespace std;
 
-AsyncLogger::AsyncLogger(const std::string _name) : m_loggerId(g_seq++), m_name(_name) {
+AsyncLogger::AsyncLogger(const std::string _name) : 
+    m_loggerId(Loggers::g_loggerId++), 
+    m_name(_name) {
     m_pauseWaitMils = 250;
 }
 
@@ -111,8 +113,6 @@ void AsyncLogger::run() {
             break;
         }
 
-
-
         default:
             assert(false);
 		}
@@ -133,8 +133,9 @@ void AsyncLogger::postMsg(LogDetailMsg* msg)
     log(new LogRecord(LOG_RSP, msg));
 }
 
-
-
+void AsyncLogger::log(std::string const& msg) {
+    log(new LogRecord(LOG_MSG, msg));
+}
 
 void AsyncLogger::shutdown() {
     if (!m_thread) return;
@@ -171,3 +172,36 @@ void AsyncLogger::runLogProduce() {
         LogRecord* rec = new LogRecord(LOG_RSP, dMsg);
     }
 }
+
+void Loggers::initLoggers() {
+
+    AsyncLogger* rootLogger = new AsyncLogger(Loggers_Name().ROOT);
+    Loggers::loggers = std::map<std::string, AsyncLogger*>();
+    Loggers::addLogger(rootLogger->getName(), rootLogger);
+}
+
+void Loggers::addLogger(std::string const& name, AsyncLogger* const logger) {
+    if (nullptr != loggers[name]) return;
+    loggers[name] = logger;
+}
+
+AsyncLogger* Loggers::getLogger(std::string const& name) {
+    if (name.empty()) return loggers[name];
+    return loggers[name];
+}
+
+AsyncLogger* Loggers::log(std::string const& msg) {
+    AsyncLogger* logger = getLogger("");
+    logger->log(msg);
+    return logger;
+}
+
+AsyncLoggers* AsyncLoggers::instance = nullptr;
+
+AsyncLoggers* AsyncLoggers::getInstance() {
+    if (!instance) {
+        instance = new AsyncLoggers();
+    }
+    return instance;
+}
+
