@@ -66,6 +66,7 @@ void AsyncLogger::run() {
             shutdownLogProducer();
 
             delete rec;
+            rec = nullptr;
 
             std::unique_lock<std::mutex> lk(m_mtx);
             while (!m_queue.empty()) {
@@ -75,6 +76,7 @@ void AsyncLogger::run() {
 
                 m_queue.pop();
                 delete rec;
+                rec = nullptr;
             }
 
             m_run = false;
@@ -89,12 +91,8 @@ void AsyncLogger::run() {
             
             std::cout << "[" << tp << "] " << rec->getMsg() << std::endl;
 
-            delete tp;
-            delete dMsg;
             delete rec;
-            tp = nullptr;
             rec = nullptr;
-            dMsg = nullptr;
 
             break;
         }
@@ -131,11 +129,11 @@ void AsyncLogger::log(LogRecord* rec)
 
 void AsyncLogger::postMsg(LogDetailMsg* msg) 
 {
-    log(new LogRecord(LOG_RSP, msg));
+    log(new LogRecord(LOG_RSP, std::move("postMsg"), msg));
 }
 
-void AsyncLogger::log(std::string msg) {
-    log(new LogRecord(LOG_MSG, msg));
+void AsyncLogger::log(const std::string&& msg) {
+    log(new LogRecord(LOG_MSG, std::move(msg), nullptr));
 }
 
 void AsyncLogger::shutdown() {
@@ -170,7 +168,9 @@ void AsyncLogger::runLogProduce() {
 
         LogDetailMsg* dMsg = new LogDetailMsg(tp);
 
-        LogRecord* rec = new LogRecord(LOG_RSP, dMsg);
+        LogRecord* rec = new LogRecord(LOG_RSP, "runLogProduce", dMsg);
+
+        AsyncLoggers::log(LoggersNames.ROOT, rec);
     }
 }
 
@@ -201,15 +201,24 @@ AsyncLogger* AsyncLoggers::getLogger(const std::string& name)  {
     return loggers[name];
 }
 
-AsyncLogger* AsyncLoggers::log(const std::string& msg) {
+AsyncLogger* AsyncLoggers::log(const std::string&& msg) {
     AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(LoggersNames.ROOT);
-    logger->log(msg);
+    LogRecord* rec = new LogRecord(std::move(msg));
+    logger->log(rec);
     return logger;
 }
 
-AsyncLogger* AsyncLoggers::log(const std::string& loggerName, const std::string& msg) {
+AsyncLogger* AsyncLoggers::log(const std::string& loggerName, const std::string&& msg) {
     AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(loggerName);
-    logger->log(msg);
+    LogRecord* rec = new LogRecord(std::move(msg));
+
+    logger->log(rec);
+    return logger;
+}
+
+AsyncLogger* AsyncLoggers::log(const std::string& loggerName, LogRecord* rec) {
+    AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(loggerName);
+    logger->log(rec);
     return logger;
 }
 

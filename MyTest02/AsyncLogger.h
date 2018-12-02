@@ -34,8 +34,9 @@ public:
     static AsyncLogger* newLogger(const std::string& name);
     void addLogger(std::string name, AsyncLogger* logger);
     AsyncLogger* getLogger(const std::string& name);
-    static AsyncLogger* log(const std::string& msg);
-    static AsyncLogger* log(const std::string& loggerName, const std::string& msg);
+    static AsyncLogger* log(const std::string&& msg);
+    static AsyncLogger* log(const std::string& name, LogRecord* rec);
+    static AsyncLogger* log(const std::string& loggerName, const std::string&& msg);
 
     static std::atomic<int> g_loggerId;
     static AsyncLoggers* getInstance();
@@ -57,7 +58,7 @@ public:
 	bool shutdownLogProducer();
 	void log(LogRecord* rec);
 	void postMsg(LogDetailMsg* msg);
-    void log(std::string msg);
+    void log(const std::string&& msg);
 	void run();
 	void runLogProduce();
 	void pause();

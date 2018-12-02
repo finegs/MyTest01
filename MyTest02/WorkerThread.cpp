@@ -64,17 +64,16 @@ void WorkerThread::process()
 		{
 			assert(msg->getMsgDetail() != NULL);
 
-			const UserData* userData = static_cast<const UserData*>(msg->getMsgDetail());
+			UserData* userData = msg->getMsgDetail();
             
             ss << "[" << msg->getMsgSeq() << "] "<< userData->msg.c_str() << " on " << userData->year << " by " << threadName << endl;
 
-            AsyncLoggers::log(ss.str());
+            LogRecord* rec = new LogRecord(ss.str());
 
-			delete userData;
+            AsyncLoggers::log(LoggersNames.ROOT, rec);
+
 			delete msg;
-
             msg = nullptr;
-            userData = nullptr;
 
 			break;
 		}
@@ -83,7 +82,9 @@ void WorkerThread::process()
 		{
             ss << "[" << msg->getMsgSeq() << "] Timer expired on " << threadName << endl;
 
-            AsyncLoggers::log(ss.str());
+            LogRecord* rec = new LogRecord(ss.str());
+
+            AsyncLoggers::log(LoggersNames.ROOT, rec);
 
 			delete msg;
 			msg = nullptr;
@@ -96,6 +97,7 @@ void WorkerThread::process()
 			timerThread.join();
 
 			delete msg;
+            msg = nullptr;
 
 			unique_lock<mutex> lk(m_mutex);
 
@@ -104,11 +106,13 @@ void WorkerThread::process()
 
                 ss.clear();
 
-                const UserData* ud = static_cast<const UserData*>(msg->getMsgDetail());
+                UserData* ud = msg->getMsgDetail();
 
                 ss << "[" << msg->getMsgSeq() << "] [" << ((ud) ? ud->msg.c_str() : "" ) << "] on " << ( ud  ? ud->year : 0) << " by " << threadName << endl;
 
-                AsyncLoggers::log(ss.str());
+                LogRecord* rec = new LogRecord(ss.str());
+
+                AsyncLoggers::log(LoggersNames.ROOT, rec);
 
 				m_queue.pop();
 				delete msg;
@@ -119,7 +123,9 @@ void WorkerThread::process()
 
 			ss << "Exit thread on " << threadName << endl;
 
-            AsyncLoggers::log(ss.str());
+            LogRecord* rec = new LogRecord(ss.str());
+
+            AsyncLoggers::log(LoggersNames.ROOT, rec);
 
 			m_run = false;
 
@@ -132,7 +138,7 @@ void WorkerThread::process()
 	}
 }
 
-void WorkerThread::postMsg(const UserData* data)
+void WorkerThread::postMsg(UserData* data)
 {
 	assert(m_thread);
 

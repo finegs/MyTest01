@@ -25,7 +25,7 @@ public:
 	
 	static std::thread::id getCurrentThreadId();
 
-	void postMsg(const UserData* data);
+	void postMsg(UserData* data);
 
 private:
 	WorkerThread(const WorkerThread&);

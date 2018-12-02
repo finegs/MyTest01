@@ -14,9 +14,21 @@ enum LogRecordType {
 
 class LogRecord {
 public:
-    LogRecord(std::string _msg) : m_type(LOG_MSG), m_msg(_msg), m_detailMsg(nullptr) {};
-    LogRecord(LogRecordType _type, std::string _msg) : m_type(_type), m_msg(_msg), m_detailMsg(nullptr) {};
-    LogRecord(LogRecordType _type, LogDetailMsg* _dMsg) : m_type(_type), m_msg(""), m_detailMsg(_dMsg) {};
+    LogRecord(const std::string&& _msg) {
+        m_msg.assign(_msg);
+        m_type = LOG_MSG;
+        m_detailMsg = nullptr;
+    };
+    LogRecord(LogRecordType _type, const std::string&& _msg) {
+        m_msg.assign(_msg);
+        m_type = _type;
+        m_detailMsg = nullptr;
+    };
+    LogRecord(LogRecordType _type, const std::string&& _msg, LogDetailMsg* _dMsg) {
+        m_msg.assign(_msg);
+        m_type = _type;
+        m_detailMsg = _dMsg;
+    };
     ~LogRecord() {
         m_msg.clear();
         if (!m_detailMsg) return;

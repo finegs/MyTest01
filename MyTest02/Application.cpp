@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
 	// Create message to send to worker thread 1
 	UserData* userData1 = new UserData();
-	userData1->msg = "Hello world";
+	userData1->msg.assign("Hello world");
 	userData1->year = 2017;
 
 	// Post the message to worker thread 1
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
 	// Create message to send to worker thread 2
 	UserData* userData2 = new UserData();
-	userData2->msg = "Goodbye 2017 and Hello 2018";
+	userData2->msg.assign("Goodbye 2017 and Hello 2018");
 	userData2->year = 2018;
 
 	// Post the message to worker thread 2

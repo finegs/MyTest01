@@ -12,8 +12,8 @@ enum WorkerThreadMsgType {
 class WorkerThreadMsg {
 public:
     static std::atomic<int> g_seq;
-	WorkerThreadMsg(WorkerThreadMsgType _id, const UserData* _msg) : 
-        msgType(_id), 
+	WorkerThreadMsg(WorkerThreadMsgType _MsgType, UserData* _msg) : 
+        msgType(_MsgType), 
         msgSeq(g_seq++), 
         msgDetail(_msg) 
     {
@@ -21,16 +21,16 @@ public:
 
 	~WorkerThreadMsg() 
     {
-		//if (!msg) return;
-		//delete msg;
-		//msg = nullptr;
+		if (!msgDetail) return;
+		delete msgDetail;
+        msgDetail = nullptr;
 	}
 
     WorkerThreadMsgType getMsgType() const { return msgType; }
     int getMsgSeq() const { return msgSeq; }
-    const UserData* getMsgDetail() const { return msgDetail; }
+    UserData* getMsgDetail() const { return msgDetail; }
 private:
 	WorkerThreadMsgType msgType;
 	int msgSeq;
-	const UserData* msgDetail;
+	UserData* msgDetail;
 };
