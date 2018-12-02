@@ -6,6 +6,8 @@
 
 using namespace std;
 
+std::atomic<int> AsyncLoggers::g_loggerId = 0;
+std::mutex AsyncLoggers::sMutex;
 std::atomic<int> WorkerThreadMsg::g_seq = 0;
 
 int main(int argc, char* argv[])
@@ -36,7 +38,7 @@ int main(int argc, char* argv[])
 	workerThread2.postMsg(userData2);
 
 	// Give time for messages processing on worker threads
-	this_thread::sleep_for(10s);
+	this_thread::sleep_for(999999999999s);
 
 	workerThread1.exitThread();
 	workerThread2.exitThread();

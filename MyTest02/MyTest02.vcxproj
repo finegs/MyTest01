@@ -124,6 +124,7 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="AsyncLogger.cpp" />
+    <ClCompile Include="IdGen.cpp" />
     <ClCompile Include="WorkerThread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

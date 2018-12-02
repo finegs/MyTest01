@@ -3,10 +3,12 @@
 
 using namespace std;
 
-AsyncLogger::AsyncLogger(const std::string& _name) : m_name(_name), m_loggerId(AsyncLoggers::g_loggerId++), m_pauseWaitMils(250) {
+AsyncLogger::AsyncLogger(int _loggerId, const std::string& _name) : m_loggerId(_loggerId), m_name(_name), m_pauseWaitMils(250) 
+{
 }
 
-AsyncLogger::~AsyncLogger() {
+AsyncLogger::~AsyncLogger() 
+{
 }
 
 bool AsyncLogger::createThread() {
@@ -129,7 +131,7 @@ void AsyncLogger::postMsg(LogDetailMsg* msg)
     log(new LogRecord(LOG_RSP, msg));
 }
 
-void AsyncLogger::log(std::string const& msg) {
+void AsyncLogger::log(std::string msg) {
     log(new LogRecord(LOG_MSG, msg));
 }
 
@@ -169,25 +171,41 @@ void AsyncLogger::runLogProduce() {
     }
 }
 
-void AsyncLoggers::initLoggers() {
+AsyncLogger* AsyncLoggers::newLogger(const std::string& name) {
+    AsyncLogger* logger;
+    if (logger = AsyncLoggers::getInstance()->getLogger(name)) return logger;
+    logger = new AsyncLogger(AsyncLoggers::g_loggerId++, name);
 
-    AsyncLogger* rootLogger = new AsyncLogger(Loggers_Name().ROOT);
-    //AsyncLoggers::loggers = std::map<const std::string, const AsyncLogger*>();
-    AsyncLoggers::addLogger(rootLogger->getName(), rootLogger);
+    AsyncLoggers::getInstance()->addLogger(logger->getName(), logger);
+    logger->createThread();
+    return logger;
 }
 
-void AsyncLoggers::addLogger(const std::string& name, AsyncLogger* logger) {
-    if (nullptr != loggers[name]) return;
+void AsyncLoggers::initLoggers() {
+
+    AsyncLogger* rootLogger = AsyncLoggers::newLogger(LoggersNames.ROOT);
+
+    AsyncLoggers::getInstance()->addLogger(rootLogger->getName(), rootLogger);
+}
+
+void AsyncLoggers::addLogger(std::string name, AsyncLogger* logger) {
+    if (loggers[name]) return;
     loggers[name] = logger;
 }
 
 AsyncLogger* AsyncLoggers::getLogger(const std::string& name)  {
-    if (name.empty()) return loggers[name];
+    if (name.empty()) return loggers[LoggersNames.ROOT];
     return loggers[name];
 }
 
-AsyncLogger* AsyncLoggers::log(const std::string& msg) {
-    AsyncLogger* logger = getLogger("");
+AsyncLogger* AsyncLoggers::log(std::string msg) {
+    AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(LoggersNames.ROOT);
+    logger->log(std::move(std::string(msg)));
+    return logger;
+}
+
+AsyncLogger* AsyncLoggers::log(const std::string& loggerName, std::string msg) {
+    AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(loggerName);
     logger->log(std::move(std::string(msg)));
     return logger;
 }
@@ -195,14 +213,13 @@ AsyncLogger* AsyncLoggers::log(const std::string& msg) {
 AsyncLoggers* AsyncLoggers::instance = nullptr;
 
 AsyncLoggers* AsyncLoggers::getInstance() {
-    if (!instance) {
 
-        AsyncLoggers::g_loggerId = 0;
+    if (!instance) {
+        std::lock_guard<std::mutex> mLock(sMutex);
 
         instance = new AsyncLoggers();
 
         AsyncLoggers::initLoggers();
-
     }
     return instance;
 }

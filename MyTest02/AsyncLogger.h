@@ -19,43 +19,52 @@ class LogDetailMsg;
 class AsyncLogger;
 class AsyncLoggers;
 
-struct Loggers_Name {
+static struct Loggers_Names {
     const std::string ROOT = std::string("ROOT");
-};
+} LoggersNames;
 
 class AsyncLoggers {
 
+public: 
+    AsyncLoggers(AsyncLoggers const&) = delete;
+    AsyncLoggers& operator=(AsyncLoggers const&) = delete;
+
 public:
     static void initLoggers();
-    static void addLogger(const std::string& name, AsyncLogger* logger);
-    static AsyncLogger* getLogger(const std::string& name);
-    static AsyncLogger* log(const std::string& msg);
+    static AsyncLogger* newLogger(const std::string& name);
+    void addLogger(std::string name, AsyncLogger* logger);
+    AsyncLogger* getLogger(const std::string& name);
+    static AsyncLogger* log(std::string msg);
+    static AsyncLogger* log(const std::string& loggerName, std::string msg);
+
     static std::atomic<int> g_loggerId;
     static AsyncLoggers* getInstance();
 private:
     AsyncLoggers() {};
+    static std::mutex sMutex;
     static AsyncLoggers* instance;
-    static std::map<const std::string&, AsyncLogger*> loggers;
+    std::map<std::string, AsyncLogger*> loggers;
 };
 
 class AsyncLogger {
-
+    friend AsyncLoggers;
+private:
+	AsyncLogger(int loggerId, const std::string& name);
 public:
-	AsyncLogger(const std::string& name);
 	~AsyncLogger();
 
 	bool startLogProducer();
 	bool shutdownLogProducer();
 	void log(LogRecord* rec);
 	void postMsg(LogDetailMsg* msg);
-    void log(std::string const& msg);
+    void log(std::string msg);
 	void run();
 	void runLogProduce();
 	void pause();
 	void resume();
 	void shutdown();
 
-    const std::string getName() const { return m_name; };
+    std::string getName() const { return m_name; };
 	int getLoggerId() { return m_loggerId; }
     void setPauseDelayMils(int _pauseWaitMils) { m_pauseWaitMils = _pauseWaitMils;    }
 
@@ -65,8 +74,8 @@ public:
 	}
 
 private:
-	const std::string m_name;
 	const int m_loggerId;
+	const std::string m_name;
 	std::atomic<bool> m_exit;
 	std::atomic<bool> m_run;
     std::atomic<bool> m_pause;
