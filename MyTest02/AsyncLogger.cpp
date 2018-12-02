@@ -90,8 +90,11 @@ void AsyncLogger::run() {
             std::cout << "[" << tp << "] " << rec->getMsg() << std::endl;
 
             delete tp;
+            delete dMsg;
             delete rec;
-            rec = 0;
+            tp = nullptr;
+            rec = nullptr;
+            dMsg = nullptr;
 
             break;
         }
@@ -198,15 +201,15 @@ AsyncLogger* AsyncLoggers::getLogger(const std::string& name)  {
     return loggers[name];
 }
 
-AsyncLogger* AsyncLoggers::log(std::string msg) {
+AsyncLogger* AsyncLoggers::log(const std::string& msg) {
     AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(LoggersNames.ROOT);
-    logger->log(std::move(std::string(msg)));
+    logger->log(msg);
     return logger;
 }
 
-AsyncLogger* AsyncLoggers::log(const std::string& loggerName, std::string msg) {
+AsyncLogger* AsyncLoggers::log(const std::string& loggerName, const std::string& msg) {
     AsyncLogger* logger = AsyncLoggers::getInstance()->getLogger(loggerName);
-    logger->log(std::move(std::string(msg)));
+    logger->log(msg);
     return logger;
 }
 

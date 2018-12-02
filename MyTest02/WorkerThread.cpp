@@ -72,6 +72,10 @@ void WorkerThread::process()
 
 			delete userData;
 			delete msg;
+
+            msg = nullptr;
+            userData = nullptr;
+
 			break;
 		}
 
@@ -108,6 +112,7 @@ void WorkerThread::process()
 
 				m_queue.pop();
 				delete msg;
+                msg = nullptr;
 			}
 
             ss.clear();

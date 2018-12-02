@@ -4,6 +4,7 @@ class LogDetailMsg {
 public:
     LogDetailMsg(const void* _data) : m_data(_data) {}
     ~LogDetailMsg() {
+        if (!m_data) return;
         delete m_data;
         m_data = 0;
     }
